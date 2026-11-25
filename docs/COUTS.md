@@ -1,0 +1,48 @@
+# Note de coûts — coût et temps par unité produite
+
+> **Estimations avant production.** Les coûts réels sont calculés pour chaque sortie dans `Journal › cout_usd`
+> (tokens réellement facturés × tarifs de `Config`) et agrégés dans le **Dashboard** (coût moyen par format,
+> projection 1 000 sorties). Remplacer ce tableau par les chiffres du Dashboard après le premier lot, et joindre
+> le relevé d'usage de Google AI Studio (Facturation › Utilisation).
+
+## Hypothèses
+- Modèle : `gemini-2.5-flash` (0,30 $ / 1M tokens entrée, 2,50 $ / 1M sortie, réflexion désactivée).
+  Relecteur : `gemini-2.5-flash-lite` (0,10 $ / 0,40 $). Synthèse vocale : `gemini-2.5-flash-preview-tts`
+  (0,50 $ entrée, 10 $ / 1M tokens audio ≈ 25 tokens par seconde). Tarifs à vérifier sur ai.google.dev/pricing.
+- Source type = extrait vidéo de 2 min (~300 mots). Consigne complète (règles + voix de marque + canal + format) ≈ 1 300 tokens.
+- 1,2 génération en moyenne par sortie (régénération si un contrôle échoue).
+- Apps Script, Drive, Sheets, Colab : gratuits dans les quotas d'un compte Google. Pas d'abonnement d'orchestration.
+
+## Par format
+
+| Format | Tokens entrée / sortie (approx.) | Coût IA / sortie | Temps / sortie |
+|---|---|---|---|
+| Post LinkedIn | 1,8 k / 0,5 k + relecture | ≈ 0,0025 $ | 8–15 s |
+| Thread X | 1,8 k / 0,6 k + relecture | ≈ 0,0028 $ | 8–15 s |
+| Article de blog | 1,9 k / 1,5 k + relecture | ≈ 0,0055 $ | 15–30 s |
+| Chapitrage YouTube (vidéo 12 min) | 4,5 k / 0,3 k + relecture | ≈ 0,0030 $ | 8–15 s |
+| FAQ | 1,9 k / 0,9 k + relecture | ≈ 0,0035 $ | 10–20 s |
+| Sous-titres EN (vidéo 12 min) | 6 k / 6 k (sans relecture) | ≈ 0,017 $ | 30–60 s |
+| Carrousel PDF | 1,9 k / 0,7 k + relecture | ≈ 0,0030 $ | 20–40 s (génération Slides + PDF) |
+| Passages clés (JSON) | 2 k / 0,3 k + relecture | ≈ 0,0016 $ | 6–12 s |
+| Clip 9:16 sous-titré | 0 (ffmpeg local/Colab) | 0 $ | 30–90 s |
+| Script audio + MP3 (90 s) | TTS : 0,4 k / 2,3 k audio | ≈ 0,025 $ | 30–60 s |
+| Image 1:1 ou 16:9 | vision : 0,4 k / 0,15 k (ou 0 en mode OpenCV) | ≈ 0,0005 $ (0 $) | 3–8 s |
+
+## Projection 1 000 sorties
+- **Mix des 8 formats ★** (blog, LinkedIn, thread X, chapitres, FAQ, sous-titres EN, carrousel, clip) :
+  ≈ 0,0045 $ en moyenne → **≈ 4,5 $ pour 1 000 sorties** (≈ 4,2 €).
+- **Pire cas** (uniquement audio) : ≈ 25 $ ; **meilleur cas** (images en mode OpenCV) : 0 $.
+- **Temps** : ≈ 15 s par sortie texte, 3 exécutions Apps Script en parallèle → ≈ 5 s « mur » par sortie,
+  soit **80 sorties ≈ 7–10 min** et **1 000 sorties ≈ 1 h 30** (au-delà : augmenter `PARALLEL_WORKERS`, limite ≈ 20).
+- **Limites de débit** : offre payante niveau 1 Gemini Flash ≈ 1 000 requêtes/min → non bloquant. Les erreurs 429
+  déclenchent une attente exponentielle puis une nouvelle tentative (`MAX_RETRIES`).
+- **Temps humain** : ≈ 20 s de relecture par sortie pour passer `valide_humain` à O (le seul geste indispensable),
+  contre ≈ 20–45 min de rédaction manuelle par contenu décliné.
+
+## Comparaison
+| | Manuel | Usine |
+|---|---|---|
+| 1 message → 8 formats | 3–4 h (rédaction + mise en page + montage) | ≈ 3 min machine + 3 min de relecture |
+| Coût marginal | temps salarié | ≈ 0,04 $ |
+| Abonnements | outils de design / montage | aucun (Google + API à l'usage) |

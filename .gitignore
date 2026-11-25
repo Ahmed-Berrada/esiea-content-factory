@@ -1,0 +1,17 @@
+# secrets
+.env
+worker/.env
+worker/credentials.json
+worker/token.json
+.clasprc.json
+# python
+.venv/
+__pycache__/
+.pytest_cache/
+# corpus & sorties locales (volumineux, restent dans Drive)
+corpus/*
+!corpus/README.md
+*.mp4
+*.mp3
+worker/assets/fonts/*.ttf
+worker/assets/fonts/*.otf
