@@ -20,7 +20,8 @@
 | Thread X v01 | gemini-3.5-flash-lite | 8 277 / 8 587 | 0,025 $ | 23 s | OK (boucle de génération, corrigée depuis) |
 | Thread X v02 | gemini-3.5-flash-lite | 8 313 / 681 | 0,0054 $ | 7 s | OK mais accents manquants → contrôle ajouté |
 
-Les coûts ci-dessous sont recalculés aux tarifs ci-dessus (×2,5 env. par rapport à la v1 de cette note).
+⚠️ Le tableau « Par format » ci-dessous date de la v1 de cette note (anciens tarifs Gemini 2.5) : multiplier par ≈ 2,5
+pour les tarifs actuels, et le remplacer par les moyennes du Dashboard après le premier lot complet.
 
 ## Par format
 
