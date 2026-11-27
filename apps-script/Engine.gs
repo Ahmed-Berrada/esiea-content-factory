@@ -130,11 +130,14 @@ function buildPrompts_(job, f, src, sourceText) {
   var cfg = getConfig_(), P = getPrompts_();
   var formatPrompt = P[f.prompt_id];
   if (!formatPrompt) throw new Error('Prompt introuvable dans l\'onglet Prompts : ' + f.prompt_id);
+  // Ordre pensé pour le cache de prompt : [règles + voix de marque] (commun à toutes les sorties)
+  // → [SOURCE] (commune à tous les formats d'une même source) → [canal + consigne du format] (variable).
   var system = [
     P.SYS_REGLES || '',
-    '=== VOIX DE MARQUE ===\n' + (P[cfg.TOV_ACTIF || 'TOV_MARQUE'] || ''),
-    P['TOV_' + String(f.canal).toUpperCase()] ? '=== SPÉCIFICITÉS DU CANAL ' + String(f.canal).toUpperCase() + ' ===\n' + P['TOV_' + String(f.canal).toUpperCase()] : ''
+    '=== VOIX DE MARQUE ===\n' + (P[cfg.TOV_ACTIF || 'TOV_MARQUE'] || '')
   ].filter(String).join('\n\n');
+  var canalKey = 'TOV_' + String(f.canal).toUpperCase();
+  var canal = P[canalKey] ? '=== SPÉCIFICITÉS DU CANAL ' + String(f.canal).toUpperCase() + ' ===\n' + P[canalKey] + '\n\n' : '';
   var vars = {
     ton: job.ton || cfg.TON_DEFAUT, public: job.public || cfg.PUBLIC_DEFAUT, longueur: job.longueur || cfg.LONGUEUR_DEFAUT,
     min_car: f.min_car, max_car: f.max_car, min_mots: f.min_mots, max_mots: f.max_mots,
@@ -143,9 +146,10 @@ function buildPrompts_(job, f, src, sourceText) {
     titre_source: src.title, glossaire: cfg.GLOSSAIRE_NON_TRADUIT, langue_cible: cfg.LANGUE_TRADUCTION || 'anglais',
     debut_source: secToClock_(src.start || 0), fin_source: src.end === Infinity ? '' : secToClock_(src.end || 0)
   };
-  var user = fillPrompt_(formatPrompt, vars) + JSON_INSTRUCTION +
-    '\n\n=== SOURCE (seule source de vérité) — « ' + src.title + ' » ===\n<<<\n' + sourceText + '\n>>>';
-  return { system: system, user: user };
+  system = fillPrompt_(system, vars);  // {{ton}} / {{public}} de la voix de marque
+  var source = '=== SOURCE (seule source de vérité) — « ' + src.title + ' » ===\n<<<\n' + sourceText + '\n>>>';
+  var user = fillPrompt_(canal + '=== CONSIGNE ===\n' + formatPrompt, vars) + JSON_INSTRUCTION;
+  return { system: system, source: source, user: user };
 }
 
 function runTextJob_(job, f, s) {
@@ -163,7 +167,7 @@ function runTextJob_(job, f, s) {
       last.problems.push("budget temps de l'exécution atteint après " + attempt + ' essai(s) — relancer pour réessayer');
       break;
     }
-    var r = callLlmJson_({ system: p.system, user: p.user + feedback, json: true });
+    var r = callLlmJson_({ system: p.system, source: p.source, user: p.user + feedback, json: true });
     usage.tokensIn += r.tokensIn; usage.tokensOut += r.tokensOut;
     var data = r.data;
     var rendered = renderTemplate_(f.rendu, data, { source_titre: src.title });

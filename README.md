@@ -10,7 +10,7 @@ Sheet (Config · Sources · Formats · Prompts · Ordres · Journal · Dashboard
    │ ☑ une case cochée dans Ordres = un lot entier
    ▼
 Apps Script ─ textes : blog, LinkedIn, thread X, chapitres YouTube, FAQ, sous-titres EN, carrousel PDF…
-   │           IA par API (Gemini par défaut, modèle = 1 cellule) → contrôles auto → relecteur IA → Drive
+   │           IA par API (Claude Haiku 5.5 par défaut, modèle = 1 cellule) → contrôles auto → relecteur IA → Drive
 Worker Python ─ clip 9:16 sous-titré, résumé audio (voix de synthèse), images 1:1 / 16:9 (recadrage intelligent)
    ▼
 Drive : ESIEA_Content_Factory/02_Sorties/<FORMAT_ID>/<SOURCE>__<FORMAT>__vNN.<ext>
@@ -18,8 +18,9 @@ Drive : ESIEA_Content_Factory/02_Sorties/<FORMAT_ID>/<SOURCE>__<FORMAT>__vNN.<ex
 
 ## Déploiement en 20 minutes
 
-**Prérequis** : un compte Google, une clé API Gemini **payante** (sur l'offre gratuite, Google peut utiliser
-les données pour l'entraînement → interdit par la contrainte RGPD), Node.js (pour `clasp`), Python 3.11+ ou Colab.
+**Prérequis** : un compte Google, une clé API **Claude (Anthropic)** — les données envoyées par API ne servent pas à
+l'entraînement —, Node.js (pour `clasp`), Python 3.11+ ou Colab. Une clé Gemini n'est utile que pour le résumé audio
+(synthèse vocale) et, en option, la détection d'objets par IA des images.
 
 1. **Créer la Sheet + le script** (au choix) :
    - *Copie* : ouvrez la Sheet de référence › Fichier › Créer une copie (le script est copié avec elle). Passez à l'étape 2.
@@ -32,7 +33,7 @@ les données pour l'entraînement → interdit par la contrainte RGPD), Node.js 
      clasp push -f
      ```
 2. **Clé API** : dans l'éditeur Apps Script › ⚙ Paramètres du projet › Propriétés du script, ajoutez
-   `API_KEY_GEMINI` = votre clé. (Jamais dans la Sheet, jamais dans le code.)
+   `API_KEY_ANTHROPIC` = votre clé Claude (console.anthropic.com › API Keys). (Jamais dans la Sheet, jamais dans le code.)
 3. **Installer** : rechargez la Sheet › menu **🏭 Usine ESIEA › 1. Installer** (acceptez les autorisations).
    Cela crée les 7 onglets pré-remplis, l'arborescence Drive `ESIEA_Content_Factory/` et le déclencheur de la case à cocher.
 4. **Charte** : déposez le logo officiel ESIEA (PNG transparent) dans `03_Gabarits/`, collez son ID dans
@@ -73,15 +74,19 @@ les données pour l'entraînement → interdit par la contrainte RGPD), Node.js 
    `pdf_carrousel`, `pdf_infographie`), contraintes, `rendu` (ex. `{{titre}}\n\n{{contenu}}` ou `{{#items}}- {{texte}}\n{{/items}}`).
 3. **Ordres** : `formats = MONFORMAT`, cocher `lancer`. Le dossier Drive est créé au premier fichier.
 
-**Changer de modèle** : `Config › MODEL`. **Changer de fournisseur** : `Config › PROVIDER` (`openai`, `anthropic`)
-+ propriété de script `API_KEY_OPENAI` / `API_KEY_ANTHROPIC`. Chaque ligne du Journal garde le modèle utilisé.
+**Coûts optimisés (Claude)** : modèle Haiku 5.5 (0,10 $ / 0,50 $ par million de tokens), effort `low`, sorties JSON
+garanties par schéma, et cache de prompt : les règles + la voix de marque, puis la source, sont relues à 10 % du prix
+quand une même source est déclinée en plusieurs formats. Le Journal enregistre le coût réel de chaque sortie.
+
+**Changer de modèle** : `Config › MODEL` (ex. `claude-sonnet-5-5` pour plus de finesse). **Changer de fournisseur** :
+`Config › PROVIDER` (`anthropic`, `gemini`, `openai`) + propriété de script `API_KEY_<PROVIDER>`. Chaque ligne du Journal garde le modèle utilisé.
 
 ## Données (RGPD)
 - **Ce qui est envoyé aux IA** : le texte des sous-titres / pages publiques ESIEA, *après anonymisation automatique*
   (e-mails, téléphones, « je m'appelle X », noms listés dans `Config › NOMS_A_ANONYMISER`), et les images à recadrer
   si `VISION_MODE = gemini` (sinon détection 100 % locale avec OpenCV).
-- **Fournisseur** : API Gemini en **offre payante** (les données des services payants ne servent pas à l'entraînement
-  et ne sont conservées que pour la détection d'abus). Même principe si l'on bascule sur OpenAI ou Anthropic (API).
+- **Fournisseur** : API Claude (Anthropic) — les données envoyées par API ne servent pas à l'entraînement des modèles.
+  La synthèse vocale passe par l'API Gemini en offre payante (même garantie). Détection d'images 100 % locale par défaut.
 - **Clés** : propriétés du script Apps Script et fichier `.env` / secrets Colab, jamais dans la Sheet ni le dépôt.
 - **Personnes réelles** : aucune image de personne générée ; voix de synthèse génériques prédéfinies (pas de clonage) ;
   les consignes interdisent toute citation attribuée et le nom des personnes ; le relecteur IA le vérifie.

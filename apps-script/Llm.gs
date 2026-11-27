@@ -46,13 +46,14 @@ function callLlm_(req) {
   var maxTokens = cfgNum_('MAX_OUTPUT_TOKENS', 4096);
   var key = getApiKey_(provider);
   var url, payload, headers = {};
+  var userText = req.source ? req.user + '\n\n' + req.source : req.user;  // fournisseurs sans cache explicite
 
   if (provider === 'gemini') {
     url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent';
     headers['x-goog-api-key'] = key;
     payload = {
       systemInstruction: { parts: [{ text: req.system || '' }] },
-      contents: [{ role: 'user', parts: [{ text: req.user }] }],
+      contents: [{ role: 'user', parts: [{ text: userText }] }],
       generationConfig: { temperature: temperature, maxOutputTokens: maxTokens }
     };
     if (req.json) {
@@ -70,17 +71,30 @@ function callLlm_(req) {
     headers.Authorization = 'Bearer ' + key;
     payload = {
       model: model, temperature: temperature, max_completion_tokens: maxTokens,
-      messages: [{ role: 'system', content: req.system || '' }, { role: 'user', content: req.user }]
+      messages: [{ role: 'system', content: req.system || '' }, { role: 'user', content: userText }]
     };
     if (req.json) payload.response_format = { type: 'json_object' };
   } else if (provider === 'anthropic') {
+    // Claude (API Messages). Optimisations de coût :
+    //  - le bloc « system » (règles + voix de marque + canal), identique pour toutes les sorties d'un même canal,
+    //    est mis en cache (cache_control) : relu à ~0,1x le prix d'entrée au lieu d'être refacturé à chaque sortie ;
+    //  - effort bas par défaut (Config EFFORT) : peu de réflexion facturée pour des textes courts ;
+    //  - sortie JSON contrainte par schéma (output_config.format) : pas de relance pour JSON invalide.
+    // Pas de temperature : refusée par les modèles Claude récents (version d'API 2026-10-21).
     url = 'https://api.anthropic.com/v1/messages';
     headers['x-api-key'] = key;
-    headers['anthropic-version'] = '2023-06-01';
+    headers['anthropic-version'] = '2026-10-21';
     payload = {
-      model: model, max_tokens: maxTokens, temperature: temperature,
-      system: req.system || '', messages: [{ role: 'user', content: req.user }]
+      model: model, max_tokens: maxTokens,
+      system: [{ type: 'text', text: req.system || ' ', cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content: req.source
+        ? [{ type: 'text', text: req.source, cache_control: { type: 'ephemeral' } }, { type: 'text', text: req.user }]
+        : req.user }],
+      output_config: { effort: String(cfg.EFFORT || 'low') }
     };
+    if (req.json && req.schema !== false) {
+      payload.output_config.format = { type: 'json_schema', schema: toJsonSchema_(req.schema || OUTPUT_SCHEMA) };
+    }
   } else {
     throw new Error('PROVIDER inconnu : ' + provider);
   }
@@ -134,10 +148,41 @@ function parseLlmResponse_(provider, model, j) {
     text = j.choices[0].message.content;
     tin = j.usage.prompt_tokens; tout = j.usage.completion_tokens;
   } else {
-    text = j.content.map(function (c) { return c.text || ''; }).join('');
-    tin = j.usage.input_tokens; tout = j.usage.output_tokens;
+    var ua = j.usage || {};
+    var cRead = ua.cache_read_input_tokens || 0, cWrite = ua.cache_creation_input_tokens || 0;
+    // tokens d'entrée « équivalents facturés » : écriture cache 1,25x, lecture cache 0,1x (tarifs Anthropic)
+    tin = Math.round((ua.input_tokens || 0) + 1.25 * cWrite + 0.1 * cRead);
+    tout = ua.output_tokens || 0;
+    Logger.log('tokens ' + model + ' : entrée ' + (ua.input_tokens || 0) + ', cache écrit ' + cWrite + ', cache lu ' + cRead +
+      ', sortie ' + tout + ', fin ' + j.stop_reason);
+    if (j.stop_reason === 'refusal') throw new Error('Claude a refusé la demande (' + JSON.stringify(j.stop_details || {}) + ')');
+    text = (j.content || []).filter(function (c) { return c.type === 'text'; }).map(function (c) { return c.text; }).join('');
+    if (j.stop_reason === 'max_tokens') throw new Error('Réponse Claude tronquée (max_tokens) — augmenter Config MAX_OUTPUT_TOKENS');
+    if (!text.trim()) throw new Error('Réponse Claude vide (stop_reason=' + j.stop_reason + ')');
   }
   return { text: text, tokensIn: tin, tokensOut: tout, model: model, provider: provider };
+}
+
+/**
+ * Schéma « Gemini » (types en MAJUSCULES, maxItems) → JSON Schema accepté par les sorties structurées Claude :
+ * types en minuscules, additionalProperties: false sur chaque objet, contraintes non supportées retirées
+ * (maxItems est revérifié par les contrôles de l'onglet Formats).
+ */
+function toJsonSchema_(s) {
+  if (Array.isArray(s)) return s.map(toJsonSchema_);
+  if (!s || typeof s !== 'object') return s;
+  var out = {};
+  Object.keys(s).forEach(function (k) {
+    if (k === 'maxItems' || k === 'minItems') return;
+    var v = s[k];
+    if (k === 'type') out.type = String(v).toLowerCase();
+    else if (k === 'properties') {
+      out.properties = {};
+      Object.keys(v).forEach(function (p) { out.properties[p] = toJsonSchema_(v[p]); });
+    } else out[k] = toJsonSchema_(v);
+  });
+  if (out.type === 'object') out.additionalProperties = false;
+  return out;
 }
 
 /** Appel + parse JSON, avec une relance si le JSON est invalide. */
@@ -146,7 +191,7 @@ function callLlmJson_(req) {
   try {
     r.data = parseJsonLoose_(r.text);
   } catch (e) {
-    var r2 = callLlm_({ system: req.system, user: req.user + '\n\nATTENTION : ta réponse précédente n\'était pas un JSON valide. Renvoie uniquement le JSON.', json: true, model: req.model, schema: req.schema });
+    var r2 = callLlm_({ system: req.system, source: req.source, user: req.user + '\n\nATTENTION : ta réponse précédente n\'était pas un JSON valide. Renvoie uniquement le JSON.', json: true, model: req.model, schema: req.schema });
     usage.tokensIn += r2.tokensIn; usage.tokensOut += r2.tokensOut;
     r2.data = parseJsonLoose_(r2.text);
     r = r2;

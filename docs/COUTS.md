@@ -5,6 +5,21 @@
 > projection 1 000 sorties). Remplacer ce tableau par les chiffres du Dashboard après le premier lot, et joindre
 > le relevé d'usage de Google AI Studio (Facturation › Utilisation).
 
+## Configuration actuelle : Claude Haiku 5.5 (optimisée coûts)
+| Levier | Effet |
+|---|---|
+| Modèle `claude-haiku-5-5` | 0,10 $ / 1M tokens entrée, 0,50 $ / 1M sortie (7,5x moins cher en sortie que Gemini 3.8 Flash) |
+| Cache de prompt (règles + voix de marque, puis la source) | relus à 0,1x : une source déclinée en 8 formats ne paie sa lecture complète qu'une fois |
+| `EFFORT = low` | réflexion minimale facturée, suffisante pour des textes courts contrôlés ensuite |
+| Sortie JSON par schéma | plus de relance pour JSON invalide ni de boucle de génération |
+| Relecteur sur Haiku, secours Sonnet 5.5 uniquement en cas de surcharge | la relecture coûte ≈ 0,0002 $ |
+| Images en détection locale (OpenCV) | 0 $ |
+
+**Estimation par sortie texte** (source 4 k tokens déjà en cache, consignes 1,5 k, sortie ≈ 600 tokens dont réflexion) :
+≈ 0,0001 $ d'entrée + 0,0003 $ de sortie + 0,0002 $ de relecture ≈ **0,0006 $**, soit **≈ 0,60 $ pour 1 000 sorties**
+(≈ 1 $ sans cache). Synthèse vocale (Gemini TTS) inchangée : ≈ 0,02 $ par minute d'audio.
+À confirmer par le Dashboard après le premier lot (le Journal enregistre les tokens réellement facturés, cache compris).
+
 ## Hypothèses
 - Modèle principal : `gemini-3.8-flash` (0,75 $ / 1M tokens entrée, 3,75 $ / 1M sortie réflexion incluse — tarif 2026,
   doublé au 01/01/2027). Secours et relecteur : `gemini-3.5-flash-lite` (0,30 $ / 2,50 $). Voix : `gemini-3.8-flash-tts`
