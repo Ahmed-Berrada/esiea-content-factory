@@ -215,8 +215,12 @@ class Worker:
         for j in self.journal.rows:
             if (j.get("moteur") or "") != "worker":
                 continue
-            stale = j["statut"] == "EN_COURS" and j.get("maj_le") and \
-                (datetime.now() - datetime.strptime(j["maj_le"][:19], "%Y-%m-%d %H:%M:%S")).total_seconds() > 1800
+            stale = False
+            if j["statut"] == "EN_COURS" and j.get("maj_le"):
+                try:  # la Sheet peut afficher la date au format local : on ne bloque pas le lot pour ça
+                    stale = (datetime.now() - datetime.strptime(str(j["maj_le"])[:19], "%Y-%m-%d %H:%M:%S")).total_seconds() > 1800
+                except ValueError:
+                    stale = False
             if j["statut"] in ("A_FAIRE", "ATTENTE_DEP") or stale:
                 out.append(j)
         return out
