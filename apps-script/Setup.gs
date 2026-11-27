@@ -106,6 +106,17 @@ function formatSheets_() {
 function colLetter_(n) { var s = ''; while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
 
 /** Dashboard 100 % formules : se met à jour tout seul à chaque écriture dans le Journal. */
+/**
+ * Les formules sont écrites avec des virgules (syntaxe US) ; dans les Sheets en paramètres régionaux
+ * à virgule décimale (fr_FR…), Google attend des points-virgules → conversion automatique.
+ */
+function fx_(f) {
+  var loc = String(ss_().getSpreadsheetLocale() || 'en_US');
+  if (/^(en|ja|zh|ko|he|iw|th|hi|ms|fil|tl)/i.test(loc)) return f;
+  // remplace les virgules hors chaînes "..."
+  return f.split('"').map(function (part, i) { return i % 2 ? part : part.replace(/,/g, ';'); }).join('"');
+}
+
 function buildDashboard_() {
   var ss = ss_();
   var d = ss.getSheetByName(SH.DASH) || ss.insertSheet(SH.DASH);
@@ -116,7 +127,7 @@ function buildDashboard_() {
   var st = J('statut'), fmt = J('format_id'), cost = J('cout_usd'), dur = J('duree_s'), val = J('valide_humain'), conf = J('conforme');
 
   d.getRange('A1').setValue('🏭 Usine à contenus ESIEA — Tableau de bord').setFontSize(16).setFontWeight('bold').setFontColor('#002D72');
-  d.getRange('A2').setFormula('="Mis à jour : "&TEXT(NOW(),"dd/mm/yyyy hh:mm")');
+  d.getRange('A2').setFormula(fx_('="Mis à jour : "&TEXT(NOW(),"dd/mm/yyyy hh:mm")'));
   var kpis = [
     ['Sorties commandées', '=COUNTA(' + J('output_id') + ')'],
     ['✅ OK', '=COUNTIF(' + st + ',"OK")'],
@@ -134,7 +145,7 @@ function buildDashboard_() {
     ['Modèle actuel (Config)', '=IFERROR(VLOOKUP("MODEL",Config!A:B,2,FALSE),"")']
   ];
   d.getRange(4, 1, kpis.length, 1).setValues(kpis.map(function (k) { return [k[0]]; })).setFontWeight('bold');
-  d.getRange(4, 2, kpis.length, 1).setFormulas(kpis.map(function (k) { return [k[1]]; }));
+  d.getRange(4, 2, kpis.length, 1).setFormulas(kpis.map(function (k) { return [fx_(k[1])]; }));
   d.getRange('B9:B10').setNumberFormat('0.0%');
   d.getRange('B12:B14').setNumberFormat('$0.0000');
   d.getRange('B15:B16').setNumberFormat('0.0');
@@ -143,15 +154,15 @@ function buildDashboard_() {
   d.getRange(r0, 1, 1, 9).setValues([['Format', 'Niveau', 'Commandées', 'OK', 'En cours', 'Erreur/Rejet', 'Coût total $', 'Coût / sortie $', 'Coût 1 000 sorties $']])
     .setFontWeight('bold').setBackground('#002D72').setFontColor('#FFFFFF');
   var a = 'A' + (r0 + 1);
-  d.getRange(a).setFormula('=FILTER(Formats!A2:A,Formats!A2:A<>"")');
-  d.getRange('B' + (r0 + 1)).setFormula('=ARRAYFORMULA(IF(' + a + ':A="",,IFERROR(VLOOKUP(' + a + ':A,Formats!A:C,3,FALSE))))');
-  d.getRange('C' + (r0 + 1)).setFormula('=ARRAYFORMULA(IF(' + a + ':A="",,COUNTIF(' + fmt + ',' + a + ':A)))');
-  d.getRange('D' + (r0 + 1)).setFormula('=ARRAYFORMULA(IF(' + a + ':A="",,COUNTIFS(' + fmt + ',' + a + ':A,' + st + ',"OK")))');
-  d.getRange('E' + (r0 + 1)).setFormula('=ARRAYFORMULA(IF(' + a + ':A="",,COUNTIFS(' + fmt + ',' + a + ':A,' + st + ',"EN_COURS")+COUNTIFS(' + fmt + ',' + a + ':A,' + st + ',"A_FAIRE")+COUNTIFS(' + fmt + ',' + a + ':A,' + st + ',"ATTENTE_DEP")))');
-  d.getRange('F' + (r0 + 1)).setFormula('=ARRAYFORMULA(IF(' + a + ':A="",,COUNTIFS(' + fmt + ',' + a + ':A,' + st + ',"ERREUR")+COUNTIFS(' + fmt + ',' + a + ':A,' + st + ',"REJETE")))');
-  d.getRange('G' + (r0 + 1)).setFormula('=ARRAYFORMULA(IF(' + a + ':A="",,SUMIF(' + fmt + ',' + a + ':A,' + cost + ')))');
-  d.getRange('H' + (r0 + 1)).setFormula('=ARRAYFORMULA(IF(' + a + ':A="",,IFERROR(SUMIFS(' + cost + ',' + fmt + ',' + a + ':A,' + st + ',"OK")/COUNTIFS(' + fmt + ',' + a + ':A,' + st + ',"OK"),0)))');
-  d.getRange('I' + (r0 + 1)).setFormula('=ARRAYFORMULA(IF(' + a + ':A="",,H' + (r0 + 1) + ':H*1000))');
+  d.getRange(a).setFormula(fx_('=FILTER(Formats!A2:A,Formats!A2:A<>"")'));
+  d.getRange('B' + (r0 + 1)).setFormula(fx_('=ARRAYFORMULA(IF(' + a + ':A="",,IFERROR(VLOOKUP(' + a + ':A,Formats!A:C,3,FALSE))))'));
+  d.getRange('C' + (r0 + 1)).setFormula(fx_('=ARRAYFORMULA(IF(' + a + ':A="",,COUNTIF(' + fmt + ',' + a + ':A)))'));
+  d.getRange('D' + (r0 + 1)).setFormula(fx_('=ARRAYFORMULA(IF(' + a + ':A="",,COUNTIFS(' + fmt + ',' + a + ':A,' + st + ',"OK")))'));
+  d.getRange('E' + (r0 + 1)).setFormula(fx_('=ARRAYFORMULA(IF(' + a + ':A="",,COUNTIFS(' + fmt + ',' + a + ':A,' + st + ',"EN_COURS")+COUNTIFS(' + fmt + ',' + a + ':A,' + st + ',"A_FAIRE")+COUNTIFS(' + fmt + ',' + a + ':A,' + st + ',"ATTENTE_DEP")))'));
+  d.getRange('F' + (r0 + 1)).setFormula(fx_('=ARRAYFORMULA(IF(' + a + ':A="",,COUNTIFS(' + fmt + ',' + a + ':A,' + st + ',"ERREUR")+COUNTIFS(' + fmt + ',' + a + ':A,' + st + ',"REJETE")))'));
+  d.getRange('G' + (r0 + 1)).setFormula(fx_('=ARRAYFORMULA(IF(' + a + ':A="",,SUMIF(' + fmt + ',' + a + ':A,' + cost + ')))'));
+  d.getRange('H' + (r0 + 1)).setFormula(fx_('=ARRAYFORMULA(IF(' + a + ':A="",,IFERROR(SUMIFS(' + cost + ',' + fmt + ',' + a + ':A,' + st + ',"OK")/COUNTIFS(' + fmt + ',' + a + ':A,' + st + ',"OK"),0)))'));
+  d.getRange('I' + (r0 + 1)).setFormula(fx_('=ARRAYFORMULA(IF(' + a + ':A="",,H' + (r0 + 1) + ':H*1000))'));
   d.getRange('G' + (r0 + 1) + ':I' + (r0 + 40)).setNumberFormat('$0.0000');
   d.setColumnWidth(1, 300);
 
