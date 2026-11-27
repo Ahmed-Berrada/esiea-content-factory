@@ -154,12 +154,12 @@ def plan_crop(W: int, H: int, ratio: float, boxes: list[Box], margin: float = 0.
 
 
 def hex_to_rgb(h: str) -> tuple[int, int, int]:
-    h = (h or "#002D72").lstrip("#")
+    h = (h or "#31A9E1").lstrip("#")
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))  # type: ignore[return-value]
 
 
 def render(img_bgr: np.ndarray, plan: Plan, out_w: int, out_h: int, fallback: str = "flou",
-           color: str = "#002D72", logo: Image.Image | None = None) -> Image.Image:
+           color: str = "#31A9E1", logo: Image.Image | None = None) -> Image.Image:
     src = Image.fromarray(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
     x, y, w, h = plan.rect
     if plan.mode == "crop":
@@ -190,7 +190,7 @@ def render(img_bgr: np.ndarray, plan: Plan, out_w: int, out_h: int, fallback: st
 
 
 def smart_reframe(img_bgr: np.ndarray, out_w: int, out_h: int, mode: str = "opencv", model: str = "gemini-3.8-flash",
-                  fallback: str = "flou", color: str = "#002D72", logo: Image.Image | None = None):
+                  fallback: str = "flou", color: str = "#31A9E1", logo: Image.Image | None = None):
     """Renvoie (image PIL, plan, boxes, tokens(in,out))."""
     H, W = img_bgr.shape[:2]
     use = (0, 0)

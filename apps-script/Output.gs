@@ -59,7 +59,7 @@ function hex_(h, dflt) { h = String(h || dflt).trim(); return /^#[0-9a-f]{6}$/i.
 function buildPdf_(job, f, data, kind, ok) {
   var cfg = getConfig_();
   var W = (Number(f.largeur) || 1080) / 2, H = (Number(f.hauteur) || 1080) / 2; // px → pt
-  var C1 = hex_(cfg.COULEUR_PRIMAIRE, '#002D72'), C2 = hex_(cfg.COULEUR_SECONDAIRE, '#E4003A'),
+  var C1 = hex_(cfg.COULEUR_PRIMAIRE, '#31A9E1'), C2 = hex_(cfg.COULEUR_SECONDAIRE, '#F4B000'),
     BG = hex_(cfg.COULEUR_FOND, '#FFFFFF'), TX = hex_(cfg.COULEUR_TEXTE, '#1A1A1A');
   var fontTitle = cfg.POLICE_TITRE_SLIDES || 'Roboto', fontBody = cfg.POLICE_TEXTE_SLIDES || 'Roboto';
   var name = outputFileName_(job.source_id, job.format_id, Number(job.version) || 1, 'pdf');

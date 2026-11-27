@@ -146,7 +146,7 @@ def ffprobe(path: Path) -> dict:
 
 
 def make_clip(video: Path, cues: list[Cue], t0: float, t1: float, out: Path, work: Path, *, out_w=1080, out_h=1920,
-              dmin=10, dmax=60, color="#002D72", fonts_dir: Path | None = None, logo: Path | None = None) -> dict:
+              dmin=10, dmax=60, color="#31A9E1", fonts_dir: Path | None = None, logo: Path | None = None) -> dict:
     if not shutil.which("ffmpeg"):
         raise RuntimeError("ffmpeg introuvable (winget install Gyan.FFmpeg, ou lancer dans Colab)")
     start, end, sel = snap_to_sentences(cues, t0, t1, dmin, dmax)

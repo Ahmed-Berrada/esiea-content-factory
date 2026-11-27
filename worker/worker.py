@@ -130,7 +130,7 @@ class Worker:
         logo = Image.open(logo_path).convert("RGBA") if logo_path else None
         out_img, plan, boxes, (tin, tout) = imaging.smart_reframe(
             img, W, H, mode=mode, model=model, fallback=(self.cfg.get("FOND_REPLI") or "flou").lower(),
-            color=self.cfg.get("COULEUR_PRIMAIRE") or "#002D72", logo=logo)
+            color=self.cfg.get("COULEUR_PRIMAIRE") or "#31A9E1", logo=logo)
         out = tmp / "out.jpg"
         out_img.convert("RGB").save(out, "JPEG", quality=90)
         check = Image.open(out).size
@@ -163,7 +163,7 @@ class Worker:
         dmin, dmax = num(fmt.get("duree_min_s"), 10), num(fmt.get("duree_max_s"), 60)
         m = items[0]
         info = video.make_clip(vid, cues, video.clock(m["temps"]), video.clock(m["fin"]), tmp / "clip.mp4", tmp / "work",
-                               out_w=W, out_h=H, dmin=dmin, dmax=dmax, color=self.cfg.get("COULEUR_PRIMAIRE") or "#002D72",
+                               out_w=W, out_h=H, dmin=dmin, dmax=dmax, color=self.cfg.get("COULEUR_PRIMAIRE") or "#31A9E1",
                                fonts_dir=FONTS, logo=self.logo())
         ok = info["width"] == W and info["height"] == H and dmin - 0.5 <= info["duration"] <= dmax + 0.5
         res = self.deliver(job, tmp / "clip.mp4", "mp4", "video/mp4")
