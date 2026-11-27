@@ -15,3 +15,6 @@ corpus/*
 *.mp3
 worker/assets/fonts/*.ttf
 worker/assets/fonts/*.otf
+
+# lien local vers le projet Apps Script de chacun
+apps-script/.clasp.json
