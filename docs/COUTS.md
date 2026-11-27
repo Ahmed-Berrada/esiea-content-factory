@@ -36,6 +36,13 @@ Configuration par défaut : Gemini 3.8 Flash (hypothèses ci-dessous). Basculer 
 | Post LinkedIn | gemini-3.8-flash | 4 158 / 537 | 0,0063 $ | 220 s (API surchargée, 503) | OK, relecteur 10/10 |
 | Thread X v01 | gemini-3.5-flash-lite | 8 277 / 8 587 | 0,025 $ | 23 s | OK (boucle de génération, corrigée depuis) |
 | Thread X v02 | gemini-3.5-flash-lite | 8 313 / 681 | 0,0054 $ | 7 s | OK mais accents manquants → contrôle ajouté |
+| Thread X v03 | 3.8-flash → secours flash-lite | 4 167 / 314 | 0,0020 $ | 339 s | REJETÉ (sans accents) — contrôle efficace |
+| Thread X v04 | **gemini-4-hydrogen** | 9 187 / 3 482 | 0,041 $ | 30 s | **OK**, relecteur 10/10, français correct |
+
+**Modèle retenu : `gemini-4-hydrogen`** (1,50 $ / 7,50 $ par 1M tokens). Mesure : par génération ≈ 4,6 k tokens d'entrée,
+≈ 550 tokens de texte + ≈ 1 200 tokens de réflexion (facturés en sortie) → ≈ 0,02 $ ; ce thread a demandé 2 essais.
+Projection : ≈ 0,02–0,04 $ par sortie texte → **≈ 25 $ pour 1 000 sorties**. Leviers : `THINKING_LEVEL`, ou basculer
+sur Claude Haiku 5.5 (`PROVIDER = anthropic`, ≈ 1 $ / 1 000 sorties) avec une clé API Anthropic valide.
 
 ⚠️ Le tableau « Par format » ci-dessous date de la v1 de cette note (anciens tarifs Gemini 2.5) : multiplier par ≈ 2,5
 pour les tarifs actuels, et le remplacer par les moyennes du Dashboard après le premier lot complet.

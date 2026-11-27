@@ -10,7 +10,7 @@ Sheet (Config · Sources · Formats · Prompts · Ordres · Journal · Dashboard
    │ ☑ une case cochée dans Ordres = un lot entier
    ▼
 Apps Script ─ textes : blog, LinkedIn, thread X, chapitres YouTube, FAQ, sous-titres EN, carrousel PDF…
-   │           IA par API (Gemini 3.8 Flash par défaut, Claude possible, modèle = 1 cellule) → contrôles auto → relecteur IA → Drive
+   │           IA par API (Gemini 4 Hydrogen par défaut, Claude possible, modèle = 1 cellule) → contrôles auto → relecteur IA → Drive
 Worker Python ─ clip 9:16 sous-titré, résumé audio (voix de synthèse), images 1:1 / 16:9 (recadrage intelligent)
    ▼
 Drive : ESIEA_Content_Factory/02_Sorties/<FORMAT_ID>/<SOURCE>__<FORMAT>__vNN.<ext>

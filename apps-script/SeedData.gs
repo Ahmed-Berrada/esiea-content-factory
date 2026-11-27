@@ -6,7 +6,7 @@
 function seedConfig_() {
   return [
     ['PROVIDER', 'gemini', 'Fournisseur IA : gemini | anthropic (Claude) | openai (clé dans Propriétés du script : API_KEY_<PROVIDER>)'],
-    ['MODEL', 'gemini-3.8-flash', 'Modèle principal — changer cette cellule suffit pour changer de modèle'],
+    ['MODEL', 'gemini-4-hydrogen', 'Modèle principal — changer cette cellule suffit pour changer de modèle'],
     ['MODEL_SECOURS', 'gemini-3.5-flash-lite', 'Modèle utilisé automatiquement si MODEL est surchargé (HTTP 503/429)'],
     ['REVIEW_ENABLED', 'TRUE', 'Relecture de chaque sortie par une seconde IA'],
     ['REVIEW_MODEL', 'gemini-3.5-flash-lite', 'Modèle du relecteur (moins cher)'],
@@ -48,6 +48,8 @@ function seedConfig_() {
     ['LEXIQUE_PRONONCIATION', 'ESIEA=E-S-I-E-A; IA=I-A; cyber=cybère', 'Remplacements appliqués au texte avant synthèse vocale'],
     ['MUSIQUE_FILE_ID', '', 'Musique libre de droits (Drive) pour le fond audio — vide = sans musique'],
     ['MUSIQUE_LICENCE', '', 'Licence / origine de la musique (reportée dans le Journal)'],
+    ['PRIX_IN:gemini-4-hydrogen', 1.50, '$ / 1M tokens entrée (Gemini 4 Hydrogen, stable)'],
+    ['PRIX_OUT:gemini-4-hydrogen', 7.50, '$ / 1M tokens sortie, réflexion incluse'],
     ['PRIX_IN:claude-haiku-5-5', 0.10, '$ / 1M tokens entrée (Claude Haiku 5.5) — lecture du cache facturée 0,1x, écriture 1,25x'],
     ['PRIX_OUT:claude-haiku-5-5', 0.50, '$ / 1M tokens sortie'],
     ['PRIX_IN:claude-sonnet-5-5', 2.00, 'Claude Sonnet 5.5 (modèle de secours)'],
@@ -58,8 +60,8 @@ function seedConfig_() {
     ['PRIX_OUT:gemini-3.5-flash-lite', 2.50, ''],
     ['PRIX_IN:gemini-3.8-flash-tts', 0.50, 'texte (1,00 à partir du 01/01/2027)'],
     ['PRIX_OUT:gemini-3.8-flash-tts', 9.00, 'tokens audio (18,00 à partir du 01/01/2027)'],
-    ['PRIX_IN_DEFAUT', 0.75, 'Tarif utilisé si le modèle n\'a pas de ligne PRIX_IN:<modele>'],
-    ['PRIX_OUT_DEFAUT', 3.75, ''],
+    ['PRIX_IN_DEFAUT', 1.50, 'Tarif utilisé si le modèle n\'a pas de ligne PRIX_IN:<modele>'],
+    ['PRIX_OUT_DEFAUT', 7.50, ''],
     ['DRIVE_ROOT_ID', '', 'Rempli par l\'installation'],
     ['SOURCES_FOLDER_ID', '', 'Rempli par l\'installation'],
     ['SORTIES_FOLDER_ID', '', 'Rempli par l\'installation'],
