@@ -118,3 +118,17 @@ test('taille de police décroît avec la longueur', () => {
   const b = T.fitFontSize_('x'.repeat(600), 400, 100, 40, 10);
   assert.ok(a > b);
 });
+
+test('item vide détecté, texte rangé dans titre récupéré', () => {
+  const tpl = '{{#items}}{{n}}/{{total}} {{texte}}\n\n{{/items}}';
+  const empty = { items: [{ texte: '' }, { texte: '' }] };
+  const r1 = T.renderTemplate_(tpl, empty, {});
+  assert.match(T.checkConstraints_(r1.text, empty, {}, { itemTexts: r1.itemTexts }).errors.join(), /item 1 vide/);
+  const inTitle = { items: [{ titre: 'Le numérique change tout.' }] };
+  assert.match(T.renderTemplate_(tpl, inTitle, {}).text, /1\/1 Le numérique/);
+});
+
+test('accents français contrôlés', () => {
+  assert.strictEqual(T.hasFrenchAccents_('L ESIEA est 1re ex aequo des ecoles d ingenieurs en informatique dans le classement 2026. Un engagement fort pour votre avenir et vos projets.'), false);
+  assert.strictEqual(T.hasFrenchAccents_('L’ESIEA est 1re ex æquo des écoles d’ingénieurs en informatique dans le classement 2026. Un engagement fort pour votre avenir et vos projets.'), true);
+});

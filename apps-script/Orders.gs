@@ -9,11 +9,14 @@
 function onEditInstalled(e) {
   try {
     var s = e.range.getSheet();
-    if (s.getName() !== SH.ORDRES || e.range.getRow() < 2) return;
+    if (s.getName() !== SH.ORDRES || e.range.getLastRow() < 2) return;
+    // Google peut regrouper plusieurs modifications rapides en un seul événement (plage multi-cellules) :
+    // on ne se fie pas à la cellule modifiée, on lance toute ligne cochée pas encore lancée.
     var idx = headerIndex_(SH.ORDRES);
-    if (e.range.getColumn() !== idx.lancer) return;
-    if (e.range.getValue() !== true) return;
-    lancerOrdre_(e.range.getRow());
+    if (e.range.getColumn() > idx.lancer || e.range.getLastColumn() < idx.lancer) {
+      if (e.range.getColumn() !== idx.forcer_relance) return;
+    }
+    lancerOrdresCoches();
   } catch (err) {
     toast_('Erreur : ' + err.message);
   }
@@ -21,12 +24,14 @@ function onEditInstalled(e) {
 
 /** Menu : lance toutes les lignes d'Ordres cochées et pas encore lancées. */
 function lancerOrdresCoches() {
+  var launched = 0;
   readTable_(SH.ORDRES).rows.forEach(function (o) {
-    if (o.lancer === true && String(o.statut).indexOf('LANCE') !== 0) lancerOrdre_(o._row);
+    if (o.lancer === true && String(o.statut).indexOf('LANCE') !== 0) { lancerOrdre_(o._row, true); launched++; }
   });
+  if (launched) demarrerTraitement();
 }
 
-function lancerOrdre_(rowNum) {
+function lancerOrdre_(rowNum, noStart) {
   var lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
@@ -41,7 +46,7 @@ function lancerOrdre_(rowNum) {
   } finally {
     lock.releaseLock();
   }
-  demarrerTraitement();
+  if (!noStart) demarrerTraitement();
 }
 
 function matchList_(spec, ids) {

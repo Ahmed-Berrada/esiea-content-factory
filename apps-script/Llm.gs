@@ -11,6 +11,7 @@ var OUTPUT_SCHEMA = {
     contenu: { type: 'STRING' },
     items: {
       type: 'ARRAY',
+      maxItems: 20,
       items: {
         type: 'OBJECT',
         properties: {
@@ -18,11 +19,12 @@ var OUTPUT_SCHEMA = {
           texte: { type: 'STRING' },
           temps: { type: 'STRING' },
           fin: { type: 'STRING' }
-        }
+        },
+        required: ['titre', 'texte']
       }
     },
-    hashtags: { type: 'ARRAY', items: { type: 'STRING' } },
-    faits_sources: { type: 'ARRAY', items: { type: 'STRING' } }
+    hashtags: { type: 'ARRAY', maxItems: 12, items: { type: 'STRING' } },
+    faits_sources: { type: 'ARRAY', maxItems: 15, items: { type: 'STRING' } }
   },
   required: ['titre', 'contenu', 'items']
 };
@@ -41,7 +43,7 @@ function callLlm_(req) {
   var provider = String(req.provider || cfg.PROVIDER || 'gemini').toLowerCase();
   var model = String(req.model || cfg.MODEL);
   var temperature = req.temperature !== undefined ? req.temperature : cfgNum_('TEMPERATURE', 0.6);
-  var maxTokens = cfgNum_('MAX_OUTPUT_TOKENS', 8192);
+  var maxTokens = cfgNum_('MAX_OUTPUT_TOKENS', 4096);
   var key = getApiKey_(provider);
   var url, payload, headers = {};
 
@@ -83,13 +85,15 @@ function callLlm_(req) {
     throw new Error('PROVIDER inconnu : ' + provider);
   }
 
-  var maxAttempts = 4;
+  var maxAttempts = getConfig_().MODEL_SECOURS && !req.noFallback ? 2 : 4;  // avec secours : on bascule vite
   for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+    var tCall = Date.now();
     var resp = UrlFetchApp.fetch(url, {
       method: 'post', contentType: 'application/json', headers: headers,
       payload: JSON.stringify(payload), muteHttpExceptions: true
     });
     var code = resp.getResponseCode();
+    Logger.log('IA ' + provider + '/' + model + ' essai ' + attempt + ' → HTTP ' + code + ' en ' + ((Date.now() - tCall) / 1000).toFixed(1) + ' s');
     if (code === 200) return parseLlmResponse_(provider, model, JSON.parse(resp.getContentText()));
     // limites de débit / surcharge → attente exponentielle puis nouvel essai
     if ((code === 429 || code >= 500) && attempt < maxAttempts) {
@@ -98,6 +102,14 @@ function callLlm_(req) {
     }
     var err = new Error('API ' + provider + ' HTTP ' + code + ' : ' + resp.getContentText().substring(0, 300));
     err.retryable = code === 429 || code >= 500;
+    // modèle surchargé : bascule automatique sur le modèle de secours (Config MODEL_SECOURS), tracé dans le Journal
+    var secours = String(getConfig_().MODEL_SECOURS || '');
+    if (err.retryable && secours && secours !== model && !req.noFallback) {
+      Logger.log('Modèle ' + model + ' indisponible (HTTP ' + code + ') → secours ' + secours);
+      var copy = {}; Object.keys(req).forEach(function (k) { copy[k] = req[k]; });
+      copy.model = secours; copy.noFallback = true;
+      return callLlm_(copy);
+    }
     throw err;
   }
 }
@@ -105,12 +117,19 @@ function callLlm_(req) {
 function parseLlmResponse_(provider, model, j) {
   var text = '', tin = 0, tout = 0;
   if (provider === 'gemini') {
-    var cand = (j.candidates || [])[0];
-    if (!cand || !cand.content) throw new Error('Réponse Gemini vide (' + (cand && cand.finishReason) + ')');
-    text = cand.content.parts.map(function (p) { return p.text || ''; }).join('');
+    var cand = (j.candidates || [])[0] || {};
     var u = j.usageMetadata || {};
     tin = u.promptTokenCount || 0;
     tout = (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0);
+    Logger.log('tokens ' + model + ' : entrée ' + tin + ', texte ' + (u.candidatesTokenCount || 0) + ', réflexion ' + (u.thoughtsTokenCount || 0) + ', fin ' + cand.finishReason);
+    var parts = (cand.content && cand.content.parts) || [];
+    text = parts.map(function (p) { return p.thought ? '' : (p.text || ''); }).join('');
+    if (!text.trim()) {
+      var e = new Error('Réponse Gemini vide (finishReason=' + cand.finishReason + ', réflexion=' + (u.thoughtsTokenCount || 0) +
+        ' tokens) — baisser Config THINKING_LEVEL ou augmenter MAX_OUTPUT_TOKENS');
+      e.usage = { tokensIn: tin, tokensOut: tout };
+      throw e;
+    }
   } else if (provider === 'openai') {
     text = j.choices[0].message.content;
     tin = j.usage.prompt_tokens; tout = j.usage.completion_tokens;

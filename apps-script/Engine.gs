@@ -14,31 +14,45 @@ function demarrerTraitement() {
   toast_('Traitement lancé (' + n + ' exécutions parallèles).');
 }
 
+/**
+ * Échéance absolue de l'exécution en cours (Google tue tout script à 360 s).
+ * Les tâches vérifient le temps restant avant chaque appel d'IA (deadlineLeftMs_).
+ */
+var EXEC_DEADLINE_ = 0;
+
+function deadlineLeftMs_() { return EXEC_DEADLINE_ ? EXEC_DEADLINE_ - Date.now() : Infinity; }
+
 function processQueue(e) {
   // supprime le déclencheur ponctuel qui nous a lancés (sinon ils s'accumulent, max 20)
   if (e && e.triggerUid) {
     ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getUniqueId() === e.triggerUid) ScriptApp.deleteTrigger(t); });
   }
   var t0 = Date.now();
-  var limitMs = cfgNum_('BATCH_TIME_LIMIT_S', 280) * 1000;
+  EXEC_DEADLINE_ = t0 + cfgNum_('EXEC_DEADLINE_S', 330) * 1000;
+  var minJobMs = cfgNum_('JOB_MIN_S', 120) * 1000;   // on ne démarre pas une tâche sans ce temps devant soi
   var done = 0;
-  while (Date.now() - t0 < limitMs) {
+  while (deadlineLeftMs_() > minJobMs) {
     var job = claimNextJob_();
     if (!job) break;
     runJob_(job);
     done++;
   }
   majStatutsOrdres_();
-  if (remainingJobs_() > 0) {
-    ScriptApp.newTrigger('processQueue').timeBased().after(1000).create();
-  }
+  var left = remainingJobs_();
+  if (left.todo > 0) ScriptApp.newTrigger('processQueue').timeBased().after(1000).create();
+  // filet de sécurité : une tâche EN_COURS d'une exécution tuée sera reprise après expiration
+  else if (left.running > 0) ScriptApp.newTrigger('processQueue').timeBased().after(cfgNum_('STALE_MIN', 7) * 60000).create();
   return done;
 }
 
 function remainingJobs_() {
-  return readTable_(SH.JOURNAL).rows.filter(function (j) {
-    return (j.moteur || 'apps_script') === 'apps_script' && (j.statut === STATUT.TODO || j.statut === STATUT.WAIT);
-  }).length;
+  var r = { todo: 0, running: 0 };
+  readTable_(SH.JOURNAL).rows.forEach(function (j) {
+    if ((j.moteur || 'apps_script') !== 'apps_script') return;
+    if (j.statut === STATUT.TODO || j.statut === STATUT.WAIT) r.todo++;
+    if (j.statut === STATUT.RUN) r.running++;
+  });
+  return r;
 }
 
 /** Réserve (sous verrou) la prochaine ligne à faire dont les dépendances sont OK. */
@@ -48,7 +62,7 @@ function claimNextJob_() {
   try {
     var formats = getFormats_();
     var journal = readTable_(SH.JOURNAL).rows;
-    var staleMs = 10 * 60 * 1000;
+    var staleMs = cfgNum_('STALE_MIN', 7) * 60 * 1000;  // > durée max d'une exécution Google (6 min)
     for (var k = 0; k < journal.length; k++) {
       var j = journal[k];
       if ((j.moteur || 'apps_script') !== 'apps_script') continue;
@@ -143,7 +157,12 @@ function runTextJob_(job, f, s) {
   var maxRegen = cfgNum_('MAX_REGENERATIONS', 2);
   var attempt = 0, feedback = '', last = null;
 
+  var callMs = cfgNum_('LLM_CALL_BUDGET_S', 75) * 1000;  // temps à prévoir pour un appel d'IA
   while (attempt <= maxRegen) {
+    if (last && deadlineLeftMs_() < callMs * 2) {   // pas le temps de régénérer + relire : on rend la meilleure version
+      last.problems.push("budget temps de l'exécution atteint après " + attempt + ' essai(s) — relancer pour réessayer');
+      break;
+    }
     var r = callLlmJson_({ system: p.system, user: p.user + feedback, json: true });
     usage.tokensIn += r.tokensIn; usage.tokensOut += r.tokensOut;
     var data = r.data;
@@ -152,8 +171,11 @@ function runTextJob_(job, f, s) {
     var facts = checkFacts_(rendered.text, src.text + '\n' + (src.timedText || '') + '\n' + src.title, cfg.TERMES_AUTORISES);
     var problems = cons.errors.slice();
     if (!facts.ok) problems.push('faits absents de la source : ' + facts.invented.join(', '));
+    if (String(cfg.LANGUE_SORTIE || 'fr') === 'fr' && !hasFrenchAccents_(rendered.text)) {
+      problems.push("texte français sans accents ni apostrophes : réécris avec l'orthographe française complète");
+    }
     var review;
-    if (!problems.length && cfgBool_('REVIEW_ENABLED', true)) {
+    if (!problems.length && cfgBool_('REVIEW_ENABLED', true) && deadlineLeftMs_() > callMs) {
       review = reviewOutput_(rendered.text, sourceText, f, usage);
       if (review.fait_invente || review.score < cfgNum_('REVIEW_MIN_SCORE', 7)) {
         problems.push('relecteur IA (' + review.score + '/10) : ' + (review.problemes || []).join(' ; '));

@@ -196,6 +196,12 @@ function checkFacts_(output, source, allowedCsv) {
   return { ok: uniq.length === 0, invented: uniq };
 }
 
+/** Un texte français de plus de 120 caractères contient forcément des accents. */
+function hasFrenchAccents_(t) {
+  t = String(t);
+  return t.length < 120 || /[éèêëàâùûçîïô]/i.test(t);
+}
+
 // ===================== Contraintes de format =====================
 
 function countWords_(t) { return String(t).split(/\s+/).filter(function (w) { return /[A-Za-zÀ-ÿ0-9]/.test(w); }).length; }
@@ -222,6 +228,11 @@ function checkConstraints_(rendered, data, fmt, ctx) {
   if (c.max_mots !== null && words > c.max_mots) errors.push('trop de mots : ' + words + ' > ' + c.max_mots);
   if (c.min_items !== null && items.length < c.min_items) errors.push('items : ' + items.length + ' < ' + c.min_items);
   if (c.max_items !== null && items.length > c.max_items) errors.push('items : ' + items.length + ' > ' + c.max_items);
+  if (ctx && ctx.itemTexts) {
+    ctx.itemTexts.forEach(function (t, k) {
+      if (!/[A-Za-zÀ-ÿ]{2,}/.test(t)) errors.push('item ' + (k + 1) + ' vide');
+    });
+  }
   if (c.item_max_car !== null && ctx && ctx.itemTexts) {
     ctx.itemTexts.forEach(function (t, k) {
       if (t.length > c.item_max_car) errors.push('item ' + (k + 1) + ' : ' + t.length + ' car. > ' + c.item_max_car);
@@ -286,6 +297,8 @@ function renderTemplate_(tpl, data, extra) {
   var out = tpl.replace(/\{\{#items\}\}([\s\S]*?)\{\{\/items\}\}/g, function (_, block) {
     return items.map(function (it, k) {
       if (typeof it === 'string') it = { texte: it };
+      // un modèle qui range le texte dans « titre » ne doit pas produire d'item vide
+      if (!String(it.texte || '').trim() && block.indexOf('{{titre}}') < 0 && it.titre) it = { texte: it.titre, temps: it.temps, fin: it.fin };
       var r = block.replace(/\{\{(\w+)\}\}/g, function (__, key) {
         if (key === 'n') return String(k + 1);
         if (key === 'total') return String(items.length);
@@ -330,6 +343,6 @@ if (typeof module !== 'undefined') {
     secToClock_: secToClock_, clockToSec_: clockToSec_, diagnoseCues_: diagnoseCues_,
     splitCuesIntoExtracts_: splitCuesIntoExtracts_, cuesToTimedText_: cuesToTimedText_, anonymize_: anonymize_,
     checkFacts_: checkFacts_, checkConstraints_: checkConstraints_, parseJsonLoose_: parseJsonLoose_,
-    renderTemplate_: renderTemplate_, fillPrompt_: fillPrompt_, fitFontSize_: fitFontSize_, countWords_: countWords_
+    renderTemplate_: renderTemplate_, fillPrompt_: fillPrompt_, fitFontSize_: fitFontSize_, countWords_: countWords_, hasFrenchAccents_: hasFrenchAccents_
   };
 }

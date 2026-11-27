@@ -6,12 +6,21 @@
 > le relevé d'usage de Google AI Studio (Facturation › Utilisation).
 
 ## Hypothèses
-- Modèle : `gemini-2.5-flash` (0,30 $ / 1M tokens entrée, 2,50 $ / 1M sortie, réflexion désactivée).
-  Relecteur : `gemini-2.5-flash-lite` (0,10 $ / 0,40 $). Synthèse vocale : `gemini-2.5-flash-preview-tts`
-  (0,50 $ entrée, 10 $ / 1M tokens audio ≈ 25 tokens par seconde). Tarifs à vérifier sur ai.google.dev/pricing.
+- Modèle principal : `gemini-3.8-flash` (0,75 $ / 1M tokens entrée, 3,75 $ / 1M sortie réflexion incluse — tarif 2026,
+  doublé au 01/01/2027). Secours et relecteur : `gemini-3.5-flash-lite` (0,30 $ / 2,50 $). Voix : `gemini-3.8-flash-tts`
+  (0,50 $ texte, 9 $ / 1M tokens audio ≈ 25 tokens par seconde). Tarifs relevés sur la page officielle le 27/11/2026.
 - Source type = extrait vidéo de 2 min (~300 mots). Consigne complète (règles + voix de marque + canal + format) ≈ 1 300 tokens.
-- 1,2 génération en moyenne par sortie (régénération si un contrôle échoue).
+- 1,2 génération en moyenne par sortie (régénération si un contrôle échoue). Sortie plafonnée à 4 096 tokens.
 - Apps Script, Drive, Sheets, Colab : gratuits dans les quotas d'un compte Google. Pas d'abonnement d'orchestration.
+
+## Mesures réelles (premier test, 27/11/2026, source = page d'accueil esiea.fr)
+| Sortie | Modèle | Tokens entrée / sortie | Coût | Durée | Contrôle |
+|---|---|---|---|---|---|
+| Post LinkedIn | gemini-3.8-flash | 4 158 / 537 | 0,0063 $ | 220 s (API surchargée, 503) | OK, relecteur 10/10 |
+| Thread X v01 | gemini-3.5-flash-lite | 8 277 / 8 587 | 0,025 $ | 23 s | OK (boucle de génération, corrigée depuis) |
+| Thread X v02 | gemini-3.5-flash-lite | 8 313 / 681 | 0,0054 $ | 7 s | OK mais accents manquants → contrôle ajouté |
+
+Les coûts ci-dessous sont recalculés aux tarifs ci-dessus (×2,5 env. par rapport à la v1 de cette note).
 
 ## Par format
 
@@ -31,7 +40,7 @@
 
 ## Projection 1 000 sorties
 - **Mix des 8 formats ★** (blog, LinkedIn, thread X, chapitres, FAQ, sous-titres EN, carrousel, clip) :
-  ≈ 0,0045 $ en moyenne → **≈ 4,5 $ pour 1 000 sorties** (≈ 4,2 €).
+  ≈ 0,006 $ en moyenne (mesuré : 0,005–0,006 $ par sortie texte) → **≈ 6 $ pour 1 000 sorties** en 2026, ≈ 12 $ aux tarifs 2027.
 - **Pire cas** (uniquement audio) : ≈ 25 $ ; **meilleur cas** (images en mode OpenCV) : 0 $.
 - **Temps** : ≈ 15 s par sortie texte, 3 exécutions Apps Script en parallèle → ≈ 5 s « mur » par sortie,
   soit **80 sorties ≈ 7–10 min** et **1 000 sorties ≈ 1 h 30** (au-delà : augmenter `PARALLEL_WORKERS`, limite ≈ 20).

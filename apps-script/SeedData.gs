@@ -7,11 +7,13 @@ function seedConfig_() {
   return [
     ['PROVIDER', 'gemini', 'Fournisseur IA : gemini | openai | anthropic (clé dans Propriétés du script : API_KEY_<PROVIDER>)'],
     ['MODEL', 'gemini-3.8-flash', 'Modèle principal — changer cette cellule suffit pour changer de modèle'],
+    ['MODEL_SECOURS', 'gemini-3.5-flash-lite', 'Modèle utilisé automatiquement si MODEL est surchargé (HTTP 503/429)'],
     ['REVIEW_ENABLED', 'TRUE', 'Relecture de chaque sortie par une seconde IA'],
     ['REVIEW_MODEL', 'gemini-3.5-flash-lite', 'Modèle du relecteur (moins cher)'],
     ['REVIEW_MIN_SCORE', 7, 'Score minimal (sur 10) pour accepter une sortie'],
     ['TEMPERATURE', 0.6, ''],
-    ['MAX_OUTPUT_TOKENS', 8192, ''],
+    ['MAX_OUTPUT_TOKENS', 4096, 'Plafond de sortie : coupe les boucles de génération (une sortie texte fait < 2 000 tokens)'],
+    ['LANGUE_SORTIE', 'fr', 'Langue des sorties : contrôle automatique de la présence des accents en français'],
     ['THINKING_BUDGET', 0, 'Modèles Gemini 2.5 : 0 = pas de « réflexion » facturée'],
     ['THINKING_LEVEL', 'low', 'Modèles Gemini 3.x : low | medium | high (réflexion facturée en tokens de sortie)'],
     ['MAX_REGENERATIONS', 2, 'Nouvelles tentatives quand une sortie échoue aux contrôles'],
@@ -116,7 +118,7 @@ function seedPrompts_() {
       '2. Les intitulés officiels (formations, diplômes, labels, campus) sont recopiés exactement comme dans la source.\n' +
       '3. Aucune citation entre guillemets attribuée à une personne réelle : tu reformules (« l\'école explique que… »). Tu ne nommes aucune personne.\n' +
       '4. Tu n\'inventes ni témoignage, ni anecdote, ni exemple chiffré.\n' +
-      '5. Tu écris en français correct (sauf consigne de traduction), sans emoji excessif (3 maximum), sans majuscules criardes.\n' +
+      '5. Tu écris en français correct, AVEC tous les accents et apostrophes (é, è, à, ç, l’, d’…) (sauf consigne de traduction), sans emoji excessif (3 maximum), sans majuscules criardes.\n' +
       '6. Tu respectes strictement les contraintes de longueur et de nombre d\'éléments demandées.\n' +
       '7. Dans "faits_sources", tu recopies chaque fait chiffré ou nommé que tu as utilisé, tel qu\'il apparaît dans la source.'],
     ['TOV_REFERENCE', 'voix', 'Prompt 1 « Tone of voice » fourni par le challenge (référence)', TOV_REFERENCE_],
