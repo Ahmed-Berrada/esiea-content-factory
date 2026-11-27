@@ -5,11 +5,11 @@
 
 function seedConfig_() {
   return [
-    ['PROVIDER', 'anthropic', 'Fournisseur IA : anthropic (Claude) | gemini | openai (clé dans Propriétés du script : API_KEY_<PROVIDER>)'],
-    ['MODEL', 'claude-haiku-5-5', 'Modèle principal — changer cette cellule suffit pour changer de modèle'],
-    ['MODEL_SECOURS', 'claude-sonnet-5-5', 'Modèle utilisé automatiquement si MODEL est surchargé (HTTP 503/429)'],
+    ['PROVIDER', 'gemini', 'Fournisseur IA : gemini | anthropic (Claude) | openai (clé dans Propriétés du script : API_KEY_<PROVIDER>)'],
+    ['MODEL', 'gemini-3.8-flash', 'Modèle principal — changer cette cellule suffit pour changer de modèle'],
+    ['MODEL_SECOURS', 'gemini-3.5-flash-lite', 'Modèle utilisé automatiquement si MODEL est surchargé (HTTP 503/429)'],
     ['REVIEW_ENABLED', 'TRUE', 'Relecture de chaque sortie par une seconde IA'],
-    ['REVIEW_MODEL', 'claude-haiku-5-5', 'Modèle du relecteur (moins cher)'],
+    ['REVIEW_MODEL', 'gemini-3.5-flash-lite', 'Modèle du relecteur (moins cher)'],
     ['REVIEW_MIN_SCORE', 7, 'Score minimal (sur 10) pour accepter une sortie'],
     ['TEMPERATURE', 0.6, ''],
     ['MAX_OUTPUT_TOKENS', 4096, 'Plafond de sortie : coupe les boucles de génération (une sortie texte fait < 2 000 tokens)'],
@@ -58,8 +58,8 @@ function seedConfig_() {
     ['PRIX_OUT:gemini-3.5-flash-lite', 2.50, ''],
     ['PRIX_IN:gemini-3.8-flash-tts', 0.50, 'texte (1,00 à partir du 01/01/2027)'],
     ['PRIX_OUT:gemini-3.8-flash-tts', 9.00, 'tokens audio (18,00 à partir du 01/01/2027)'],
-    ['PRIX_IN_DEFAUT', 0.10, 'Tarif utilisé si le modèle n\'a pas de ligne PRIX_IN:<modele>'],
-    ['PRIX_OUT_DEFAUT', 0.50, ''],
+    ['PRIX_IN_DEFAUT', 0.75, 'Tarif utilisé si le modèle n\'a pas de ligne PRIX_IN:<modele>'],
+    ['PRIX_OUT_DEFAUT', 3.75, ''],
     ['DRIVE_ROOT_ID', '', 'Rempli par l\'installation'],
     ['SOURCES_FOLDER_ID', '', 'Rempli par l\'installation'],
     ['SORTIES_FOLDER_ID', '', 'Rempli par l\'installation'],

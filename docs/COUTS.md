@@ -5,7 +5,9 @@
 > projection 1 000 sorties). Remplacer ce tableau par les chiffres du Dashboard après le premier lot, et joindre
 > le relevé d'usage de Google AI Studio (Facturation › Utilisation).
 
-## Configuration actuelle : Claude Haiku 5.5 (optimisée coûts)
+## Option Claude Haiku 5.5 (`PROVIDER = anthropic`) — la moins chère
+
+Configuration par défaut : Gemini 3.8 Flash (hypothèses ci-dessous). Basculer sur Claude réduit le coût d'environ 10x :
 | Levier | Effet |
 |---|---|
 | Modèle `claude-haiku-5-5` | 0,10 $ / 1M tokens entrée, 0,50 $ / 1M sortie (7,5x moins cher en sortie que Gemini 3.8 Flash) |
