@@ -39,6 +39,12 @@ Configuration par défaut : Gemini 3.8 Flash (hypothèses ci-dessous). Basculer 
 | Thread X v03 | 3.8-flash → secours flash-lite | 4 167 / 314 | 0,0020 $ | 339 s | REJETÉ (sans accents) — contrôle efficace |
 | Thread X v04 | **gemini-4-hydrogen** | 9 187 / 3 482 | 0,041 $ | 30 s | **OK**, relecteur 10/10, français correct |
 
+**Premier lot sur le corpus (27/11/2026)** : 2 vidéos × recette ★ = 16 sorties texte + 2 clips (worker).
+Résultat : 16/16 OK après correction de 3 contrôles trop stricts ; conformité scriptée 87 % sur l'ensemble du Journal
+(20/23, les 3 restantes = 2 clips en attente du worker + 1 ancien test rejeté). Hydrogen étant surchargé (503), la
+plupart des sorties ont été produites par le modèle de secours `gemini-3.5-flash-lite`, relecteur 9–10/10.
+**Coût réel moyen : 0,0071 $ par sortie OK → ≈ 7 $ pour 1 000 sorties** (Dashboard). Coût total de la journée de tests : 0,15 $.
+
 **Modèle retenu : `gemini-4-hydrogen`** (1,50 $ / 7,50 $ par 1M tokens). Mesure : par génération ≈ 4,6 k tokens d'entrée,
 ≈ 550 tokens de texte + ≈ 1 200 tokens de réflexion (facturés en sortie) → ≈ 0,02 $ ; ce thread a demandé 2 essais.
 Projection : ≈ 0,02–0,04 $ par sortie texte → **≈ 25 $ pour 1 000 sorties**. Leviers : `THINKING_LEVEL`, ou basculer

@@ -143,3 +143,9 @@ test('chapitres : 00:00 accepté même si la parole commence plus tard', () => {
 test('accents : une courte liste de chapitres sans accent est acceptée', () => {
   assert.strictEqual(T.hasFrenchAccents_('00:00 Coupe de France de Robotique\n00:20 Les robots en action\n00:45 Bilan de la competition\n01:05 Merci a tous'), true);
 });
+
+test("blog : un champ temps non affiché n'est pas contrôlé", () => {
+  const f = { format_id: 'BLOG', sortie: 'md', rendu: '# {{titre}}\n{{#items}}## {{titre}}\n{{texte}}{{/items}}' };
+  const d = { items: [{ titre: 'A', texte: 'b', temps: '00:17 - 00:50' }] };
+  assert.strictEqual(T.checkConstraints_('x', d, f, { sourceStart: 0, sourceEnd: 226 }).ok, true);
+});

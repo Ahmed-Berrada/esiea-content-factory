@@ -153,8 +153,10 @@ function seedPrompts_() {
     ['TOV_AUDIO', 'voix', 'Déclinaison audio (voix de synthèse)',
       'Audio : texte écrit pour être ÉCOUTÉ. Phrases courtes, pas de parenthèses, pas de liste à puces, pas de sigles non prononçables, pas d\'URL ni d\'emoji. Ton dynamique et clair.'],
     ['P_BLOG', 'format', 'Article de blog',
-      'Rédige un article de blog à partir de la source. Longueur : {{longueur}} ({{min_mots}} à {{max_mots}} mots au total).\n' +
-      '"titre" : titre accrocheur (max 70 caractères). "contenu" : introduction (2-3 phrases). "items" : {{min_items}} à {{max_items}} sections, chacune avec "titre" (intertitre) et "texte" (1-2 paragraphes). La dernière section conclut avec un appel à l\'action.'],
+      'Rédige un article de blog à partir de la source. Longueur : {{longueur}}, AU MOINS {{min_mots}} mots et au plus {{max_mots}} mots au total. ' +
+      'Pour atteindre cette longueur SANS RIEN INVENTER : développe chaque idée de la source, explique simplement les termes techniques, décris le contexte de ce que la source montre, reformule. ' +
+      '"titre" : titre accrocheur (max 70 caractères). "contenu" : introduction de 3 à 4 phrases. "items" : {{min_items}} à {{max_items}} sections, chacune avec "titre" (intertitre) et "texte" (2 paragraphes de 3 à 5 phrases). ' +
+      "La dernière section conclut par une invitation générale à suivre les projets de l'école, sans citer de formation, d'événement, d'offre ni de date absents de la source."],
     ['P_LINKEDIN', 'format', 'Post LinkedIn',
       'Rédige un post LinkedIn à partir de la source. Longueur : {{longueur}}, entre {{min_car}} et {{max_car}} caractères hashtags compris.\n' +
       '"titre" : résumé interne en 5 mots. "contenu" : le post complet (sans les hashtags). "hashtags" : 3 à 5 hashtags sans espace.'],

@@ -242,7 +242,10 @@ function checkConstraints_(rendered, data, fmt, ctx) {
     });
   }
   // horodatages (chapitres YouTube, passages clés)
-  var timed = items.filter(function (it) { return it && it.temps; });
+  // horodatages vérifiés seulement pour les formats qui les utilisent (chapitres, passages clés) :
+  // un champ « temps » rempli mais non affiché (ex. sections d'un blog) est ignoré.
+  var usesTime = String(fmt.rendu || '').indexOf('{{temps}}') >= 0 || ['chapitres', 'json'].indexOf(String(fmt.sortie)) >= 0 || fmt.format_id === 'YT_CHAPITRES';
+  var timed = usesTime ? items.filter(function (it) { return it && it.temps; }) : [];
   if (timed.length) {
     var prev = -1;
     var srcStart = ctx && ctx.sourceStart !== undefined ? ctx.sourceStart : 0;
