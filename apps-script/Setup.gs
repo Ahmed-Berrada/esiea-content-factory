@@ -84,9 +84,11 @@ function installTriggers_() {
 
 function formatSheets_() {
   var o = sheet_(SH.ORDRES), oi = headerIndex_(SH.ORDRES);
+  // exemples seulement si aucun ordre n'est saisi (les cases à cocher comptent comme des lignes non vides)
+  var noOrders = o.getRange(2, oi.sources, 500, 1).getValues().every(function (r) { return r[0] === ''; });
   o.getRange(2, oi.lancer, 500, 1).insertCheckboxes();
   o.getRange(2, oi.forcer_relance, 500, 1).insertCheckboxes();
-  if (o.getLastRow() < 2) {
+  if (noOrders) {
     o.getRange(2, 1, 2, 7).setValues([
       ['', false, '*', 'RECETTE:STAR', '', '', ''],
       ['', false, 'WEB-*', 'LINKEDIN, THREAD_X', 'enthousiaste et direct', 'lycéens de terminale', 'court']

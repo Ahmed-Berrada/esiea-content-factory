@@ -189,7 +189,7 @@ def render(img_bgr: np.ndarray, plan: Plan, out_w: int, out_h: int, fallback: st
     return out
 
 
-def smart_reframe(img_bgr: np.ndarray, out_w: int, out_h: int, mode: str = "opencv", model: str = "gemini-2.5-flash",
+def smart_reframe(img_bgr: np.ndarray, out_w: int, out_h: int, mode: str = "opencv", model: str = "gemini-3.8-flash",
                   fallback: str = "flou", color: str = "#002D72", logo: Image.Image | None = None):
     """Renvoie (image PIL, plan, boxes, tokens(in,out))."""
     H, W = img_bgr.shape[:2]

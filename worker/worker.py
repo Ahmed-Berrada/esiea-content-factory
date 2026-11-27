@@ -125,7 +125,7 @@ class Worker:
         W, H = int(num(fmt.get("largeur"), 1080)), int(num(fmt.get("hauteur"), 1080))
         img = self.source_image(src, tmp / "src.img")
         mode = (self.cfg.get("VISION_MODE") or "opencv").lower()
-        model = self.cfg.get("VISION_MODEL") or "gemini-2.5-flash"
+        model = self.cfg.get("VISION_MODEL") or "gemini-3.8-flash"
         logo_path = self.logo() if str(self.cfg.get("LOGO_SUR_IMAGES", "NON")).upper() == "OUI" else None
         logo = Image.open(logo_path).convert("RGBA") if logo_path else None
         out_img, plan, boxes, (tin, tout) = imaging.smart_reframe(
@@ -183,7 +183,7 @@ class Worker:
         dep = self.dep_row(job, fmt)
         script = self.f.read_text(dep["file_id"])
         text = audio.apply_lexicon(audio.clean_for_speech(script), self.cfg.get("LEXIQUE_PRONONCIATION", ""))
-        model = self.cfg.get("TTS_MODEL") or "gemini-2.5-flash-preview-tts"
+        model = self.cfg.get("TTS_MODEL") or "gemini-3.8-flash-tts"
         voice = self.cfg.get("TTS_VOICE") or "Kore"
         pcm, (tin, tout) = gemini.tts(model, voice, text)
         wav = tmp / "voice.wav"

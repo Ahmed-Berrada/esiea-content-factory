@@ -57,8 +57,12 @@ function callLlm_(req) {
       payload.generationConfig.responseMimeType = 'application/json';
       if (req.schema !== false) payload.generationConfig.responseSchema = req.schema || OUTPUT_SCHEMA;
     }
-    var tb = getConfig_().THINKING_BUDGET;
-    if (tb !== '' && tb !== undefined && /2\.5/.test(model)) payload.generationConfig.thinkingConfig = { thinkingBudget: Number(tb) };
+    var tb = getConfig_().THINKING_BUDGET, tl = getConfig_().THINKING_LEVEL;
+    if (/2\.5/.test(model)) {
+      if (tb !== '' && tb !== undefined) payload.generationConfig.thinkingConfig = { thinkingBudget: Number(tb) };
+    } else if (tl) {
+      payload.generationConfig.thinkingConfig = { thinkingLevel: String(tl) };  // Gemini 3.x : low | medium | high
+    }
   } else if (provider === 'openai') {
     url = 'https://api.openai.com/v1/chat/completions';
     headers.Authorization = 'Bearer ' + key;
