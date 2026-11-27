@@ -75,7 +75,7 @@ function seedFormats_() {
   // largeur, hauteur, duree_min_s, duree_max_s, depend_de, recettes, actif, rendu
   var V = 'video extrait', ALL = 'video extrait web texte';
   return [
-    ['BLOG', 'Article de blog', 1, '★', 'apps_script', 'blog', 'P_BLOG', 'md', ALL, '', '', 450, 1000, 3, 6, '', '', '', '', '', '', 'STAR,TEXTE', 'OUI',
+    ['BLOG', 'Article de blog', 1, '★', 'apps_script', 'blog', 'P_BLOG', 'md', ALL, '', '', 300, 1000, 3, 6, '', '', '', '', '', '', 'STAR,TEXTE', 'OUI',
       '# {{titre}}\\n\\n{{contenu}}\\n\\n{{#items}}## {{titre}}\\n\\n{{texte}}\\n\\n{{/items}}'],
     ['LINKEDIN', 'Post LinkedIn', 1, '★', 'apps_script', 'linkedin', 'P_LINKEDIN', 'txt', ALL, 500, 1800, '', '', '', '', '', '', '', '', '', '', 'STAR,TEXTE', 'OUI',
       '{{contenu}}\\n\\n{{hashtags}}'],

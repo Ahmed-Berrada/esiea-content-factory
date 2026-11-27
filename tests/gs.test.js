@@ -129,6 +129,17 @@ test('item vide détecté, texte rangé dans titre récupéré', () => {
 });
 
 test('accents français contrôlés', () => {
-  assert.strictEqual(T.hasFrenchAccents_('L ESIEA est 1re ex aequo des ecoles d ingenieurs en informatique dans le classement 2026. Un engagement fort pour votre avenir et vos projets.'), false);
+  const sans = 'L ESIEA est 1re ex aequo des ecoles d ingenieurs en informatique dans le classement 2026. Un engagement fort pour votre avenir et vos projets. ';
+  assert.strictEqual(T.hasFrenchAccents_(sans + sans + sans), false);
   assert.strictEqual(T.hasFrenchAccents_('L’ESIEA est 1re ex æquo des écoles d’ingénieurs en informatique dans le classement 2026. Un engagement fort pour votre avenir et vos projets.'), true);
+});
+
+test('chapitres : 00:00 accepté même si la parole commence plus tard', () => {
+  const f = { format_id: 'YT_CHAPITRES' };
+  const d = { items: [{ temps: '00:00', titre: 'Intro' }, { temps: '00:40', titre: 'Suite' }] };
+  assert.strictEqual(T.checkConstraints_('x', d, f, { sourceStart: 1.7, sourceEnd: 70 }).ok, true);
+});
+
+test('accents : une courte liste de chapitres sans accent est acceptée', () => {
+  assert.strictEqual(T.hasFrenchAccents_('00:00 Coupe de France de Robotique\n00:20 Les robots en action\n00:45 Bilan de la competition\n01:05 Merci a tous'), true);
 });

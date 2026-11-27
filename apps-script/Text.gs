@@ -196,10 +196,13 @@ function checkFacts_(output, source, allowedCsv) {
   return { ok: uniq.length === 0, invented: uniq };
 }
 
-/** Un texte français de plus de 120 caractères contient forcément des accents. */
+/**
+ * Un texte français rédigé (au moins 40 mots) contient forcément des accents.
+ * Les listes courtes (titres de chapitres, hashtags) peuvent légitimement n'en avoir aucun.
+ */
 function hasFrenchAccents_(t) {
   t = String(t);
-  return t.length < 120 || /[éèêëàâùûçîïô]/i.test(t);
+  return countWords_(t.replace(/\b\d{1,2}:\d{2}(:\d{2})?\b/g, ' ')) < 40 || /[éèêëàâùûçîïô]/i.test(t);
 }
 
 // ===================== Contraintes de format =====================
@@ -247,7 +250,8 @@ function checkConstraints_(rendered, data, fmt, ctx) {
     timed.forEach(function (it, k) {
       var t = clockToSec_(it.temps);
       if (isNaN(t)) { errors.push('horodatage illisible : ' + it.temps); return; }
-      if (t < srcStart - 1 || t > srcEnd + 1) errors.push('horodatage hors source : ' + it.temps);
+      // 00:00 est toujours permis (YouTube impose un 1er chapitre à 00:00, même si la parole commence plus tard)
+      if ((t < srcStart - 1 && t !== 0) || t > srcEnd + 1) errors.push('horodatage hors source : ' + it.temps);
       if (fmt.format_id === 'YT_CHAPITRES' || String(fmt.sortie) === 'chapitres') {
         if (k === 0 && t !== 0) errors.push('le 1er chapitre doit commencer à 00:00');
         if (k > 0 && t - prev < 10) errors.push('chapitres espacés de moins de 10 s (' + it.temps + ')');
